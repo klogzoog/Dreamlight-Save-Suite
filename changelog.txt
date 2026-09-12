@@ -1,15 +1,178 @@
 Dreamlight Save Suite - CHANGELOG
 =================================
 
-This changelog summarizes the Dreamlight Save Suite updates made during development so far.
-
-Version 2.1
+Version 3.9
 -----------
-- Began identifying the Dreamlight Save Suite with explicit version numbers.
-- Continued integration of the GridCollection map into the main Save Suite.
-- Worked on displaying GridCollection.grids[] objects correctly.
-- Improved support for encrypted profile.json input.
-- Integrated the previously working standalone GridCollection map into the Suite.
+- Refactored the Save Suite from one large HTML file into separate page files.
+- Added individual HTML files for:
+    Dashboard
+    Containers
+    Lists
+    Player & Currency
+    Tools
+    Pets / Assigned Pets
+    Characters
+    World / Buildings
+    Collections & Progress
+    All Editable Fields
+    Raw JSON
+    Grid Map
+- Moved the main Save Suite JavaScript out of index.html into public/js/app.js.
+- Moved the Grid Map JavaScript out of grid-visual-source.html into public/js/grid-map.js.
+- Removed the embedded Base64 Grid Map HTML payload from the main application.
+- Grid Map now loads directly from grid-visual-source.html.
+- Added a page-fragment loader so the separated page files are loaded before the application initializes.
+- Kept existing page IDs and DOM structure so existing rendering/editing functions remain compatible.
+- Continued the readable/non-minified source-code standard.
+
+Version 3.8.1
+-------------
+- Fixed the reason the v3.8 Grid Map changes were not visible.
+- The readable grid-visual-source.html had been updated, but the Suite was still displaying an older embedded Grid Map payload.
+- Re-embedded the current Grid Map source into public/index.html.
+- Verified that the embedded Grid Map and readable grid-visual-source.html matched.
+- Improved Grid page/iframe sizing so the viewport fills the available page area.
+- Preserved:
+    - drag-to-pan
+    - wheel zoom
+    - item dragging
+    - Fit
+    - GridData/reference layers
+    - GridCollection editing
+
+Version 3.8
+-----------
+- Added a Google-Maps-style Grid Map viewport.
+- Added mouse-drag panning on empty map space.
+- Preserved item/block dragging for object movement.
+- Added mouse-wheel zooming toward the pointer.
+- Added Fit behavior for centering/scaling the entire grid.
+- Added dynamically sized map viewport behavior.
+- Removed map viewport scrollbars.
+- Added resize handling.
+- Added high-DPI canvas sizing support.
+
+Version 3.7
+-----------
+- Added DiffGrid / DefaultLayout decoding support.
+- Analyzed FairyGodmotherHouse_DefaultLayout.json.
+- Identified DefaultLayout/DiffGrid files as protobuf-style binary containers despite their .json extension.
+- Added recursive protobuf field parsing for these layouts.
+- Added extraction of nested GridData/... references.
+- When a selected path points to a DiffGrid/DefaultLayout:
+    1. Decode the container.
+    2. Extract its nested GridData reference.
+    3. Resolve that reference beneath the selected root.
+    4. Load the required GridData file lazily.
+    5. Decode it for the visual reference layer.
+- Preserved direct-root loading and memory-efficient behavior.
+- Adopted readable/non-minified source formatting as the project standard.
+
+Version 3.6.1
+-------------
+- Fixed automatic reference-layer display after selecting a Grid.
+- Corrected an async redraw problem where the reference file decoded successfully but the map was drawn before decoding completed.
+- Grid selection now waits for GridDataPath resolution and decoding before redrawing.
+- Removed obsolete GRIDDATA_FILES checks from the direct-root workflow.
+- Root prompt state now uses GRID_ROOT_HANDLE.
+
+Version 3.6
+-----------
+- Removed the visible Reference GridData selector.
+- Changed the design to store/use the selected root-folder directory handle.
+- Stopped requiring a prebuilt reference-file selection list.
+- Selecting a Grid now uses that Grid's own GridDataPath.
+- The Suite resolves the GridDataPath directly beneath the selected root folder.
+- Only the selected reference file is opened and decoded.
+- Continued to prefer non-_BlockSpawn equivalents.
+- Preserved race protection and dimension validation.
+- Reduced unnecessary directory scanning and memory usage.
+
+Version 3.5.2
+-------------
+- Fixed:
+    Could not open directory: GRIDS is not defined
+- Removed dependency on a nonexistent global GRIDS variable.
+- Obtained the grid list from the actual GridCollection through collection().
+- Added compatibility for collection.grids, collection.Grids, arrays, and object-valued collections.
+
+Version 3.5.1
+-------------
+- Fixed:
+    Cannot access 'hint' before initialization
+- Removed an accidental duplicate declaration of the hint variable in chooseGridRoot().
+- Preserved targeted GridDataPath loading.
+
+Version 3.5 - Targeted GridDataPath Loading
+------------------------------------------
+- Rolled back the pre-resolved-reference-list experiment to the v3.4 approach.
+- Added targeted GridDataPath loading.
+- Read GridDataPath values from GridCollection.grids[].
+- Attempted to resolve only paths actually referenced by the profile.
+- Avoided recursively decoding unrelated JSON files.
+- Retained lazy loading of actual file contents.
+- Continued to prefer non-_BlockSpawn files.
+
+Version 3.4
+-----------
+- Fixed reference layers occasionally displaying the wrong layout.
+- Added race-condition protection to asynchronous reference loading.
+- Prevented an older/slower GridData load from replacing the currently selected Grid's layer.
+- Strengthened full-path matching.
+- Reduced reliance on unsafe basename-only matching.
+- Rejected ambiguous basename matches instead of guessing.
+- Added reference-layer dimension validation.
+- Rejected clearly incompatible reference dimensions instead of drawing an incorrect layer.
+- Preserved lazy loading.
+
+Version 3.3
+-----------
+- Changed reference matching priority for *_BlockSpawn files.
+- When both files exist, the normal/non-BlockSpawn file is preferred.
+
+  Example:
+      Village04-ForestLevel-GridData.json
+      Village04-ForestLevel-GridData_BlockSpawn.json
+
+  Preferred:
+      Village04-ForestLevel-GridData.json
+
+- *_BlockSpawn remains available as a fallback when no normal equivalent exists.
+
+Version 3.2
+-----------
+- Added lazy GridData loading.
+- Stopped decoding every JSON file in the selected directory into memory.
+- Indexed lightweight file/path information only.
+- Opened and decoded a GridData file only when its Grid was selected.
+- Kept previously decoded selected layers available during the current session.
+- Reduced startup time and memory usage.
+
+Version 3.1
+-----------
+- Changed the directory prompt to request a COMMON PARENT / REFERENCE ROOT.
+- Allowed GridData and SceneLayouts to exist in separate child directories.
+- Preserved folder identity while matching GridDataPath.
+- Added SceneLayouts path support.
+- Prioritized full relative-path matches over filename-only matches.
+- Retained *_BlockSpawn normalization.
+
+Version 3.0
+-----------
+- Removed the normal "GridData Directory" workflow.
+- Added a prompt asking the user to select a root directory.
+- Added automatic reference-layer lookup when changing the selected Grid.
+- Added recursive GridData path discovery under the selected root.
+- Added File System Access API support where available.
+- Added webkitdirectory fallback for browsers without showDirectoryPicker().
+- Added compact root-directory status in the Grid Map toolbar.
+
+Version 2.9
+-----------
+- Improved GridDataPath matching.
+- Added normalization for paths containing *_BlockSpawn.
+- Allowed a GridDataPath containing _BlockSpawn to match the corresponding normal GridData file.
+- Preserved GridCollection editing and reference-layer functionality.
 
 Version 2.x - 2.8
 -----------------
@@ -38,154 +201,13 @@ Version 2.x - 2.8
 - Improved LootTable detection after "Not LootTable" parsing errors.
 - Added grid block visualization based on width, height, index, and type.
 
-Version 2.9
+Version 2.1
 -----------
-- Improved GridDataPath matching.
-- Added normalization for paths containing *_BlockSpawn.
-- Allowed a GridDataPath containing _BlockSpawn to match the corresponding normal GridData file.
-- Preserved GridCollection editing and reference-layer functionality.
-
-Version 3.0
------------
-- Removed the normal "GridData Directory" workflow.
-- Added a prompt asking the user to select a root directory.
-- Added automatic reference-layer lookup when changing the selected Grid.
-- Added recursive GridData path discovery under the selected root.
-- Added File System Access API support where available.
-- Added webkitdirectory fallback for browsers without showDirectoryPicker().
-- Added compact root-directory status in the Grid Map toolbar.
-
-Version 3.1
------------
-- Changed the directory prompt to request a COMMON PARENT / REFERENCE ROOT.
-- Allowed GridData and SceneLayouts to exist in separate child directories.
-- Preserved folder identity while matching GridDataPath.
-- Added SceneLayouts path support.
-- Prioritized full relative-path matches over filename-only matches.
-- Retained *_BlockSpawn normalization.
-
-Version 3.2
------------
-- Added lazy GridData loading.
-- Stopped decoding every JSON file in the selected directory into memory.
-- Indexed lightweight file/path information only.
-- Opened and decoded a GridData file only when its Grid was selected.
-- Kept previously decoded selected layers available during the current session.
-- Reduced startup time and memory usage.
-
-Version 3.3
------------
-- Changed reference matching priority for *_BlockSpawn files.
-- When both files exist, the normal/non-BlockSpawn file is preferred.
-
-  Example:
-      Village04-ForestLevel-GridData.json
-      Village04-ForestLevel-GridData_BlockSpawn.json
-
-  Preferred:
-      Village04-ForestLevel-GridData.json
-
-- *_BlockSpawn remains available as a fallback when no normal equivalent exists.
-
-Version 3.4
------------
-- Fixed reference layers occasionally displaying the wrong layout.
-- Added race-condition protection to asynchronous reference loading.
-- Prevented an older/slower GridData load from replacing the currently selected Grid's layer.
-- Strengthened full-path matching.
-- Reduced reliance on unsafe basename-only matching.
-- Rejected ambiguous basename matches instead of guessing.
-- Added reference-layer dimension validation.
-- Rejected clearly incompatible reference dimensions instead of drawing an incorrect layer.
-- Preserved lazy loading.
-
-Version 3.5 - Targeted GridDataPath Loading
-------------------------------------------
-- Rolled back the pre-resolved-reference-list experiment to the v3.4 approach.
-- Added targeted GridDataPath loading.
-- Read GridDataPath values from GridCollection.grids[].
-- Attempted to resolve only paths actually referenced by the profile.
-- Avoided recursively decoding unrelated JSON files.
-- Retained lazy loading of actual file contents.
-- Continued to prefer non-_BlockSpawn files.
-
-Version 3.5.1
--------------
-- Fixed:
-    Cannot access 'hint' before initialization
-- Removed an accidental duplicate declaration of the hint variable in chooseGridRoot().
-- Preserved targeted GridDataPath loading.
-
-Version 3.5.2
--------------
-- Fixed:
-    Could not open directory: GRIDS is not defined
-- Removed dependency on a nonexistent global GRIDS variable.
-- Obtained the grid list from the actual GridCollection through collection().
-- Added compatibility for collection.grids, collection.Grids, arrays, and object-valued collections.
-
-Version 3.6
------------
-- Removed the visible Reference GridData selector.
-- Changed the design to store/use the selected root-folder directory handle.
-- Stopped requiring a prebuilt reference-file selection list.
-- Selecting a Grid now uses that Grid's own GridDataPath.
-- The Suite resolves the GridDataPath directly beneath the selected root folder.
-- Only the selected reference file is opened and decoded.
-- Continued to prefer non-_BlockSpawn equivalents.
-- Preserved race protection and dimension validation.
-- Reduced unnecessary directory scanning and memory usage.
-
-Version 3.6.1
--------------
-- Fixed automatic reference-layer display after selecting a Grid.
-- Corrected an async redraw problem where the reference file decoded successfully but the map was drawn before decoding completed.
-- Grid selection now waits for GridDataPath resolution and decoding before redrawing.
-- Removed obsolete GRIDDATA_FILES checks from the direct-root workflow.
-- Root prompt state now uses GRID_ROOT_HANDLE.
-
-Version 3.7
------------
-- Added DiffGrid / DefaultLayout decoding support.
-- Analyzed FairyGodmotherHouse_DefaultLayout.json.
-- Identified DefaultLayout/DiffGrid files as protobuf-style binary containers despite their .json extension.
-- Added recursive protobuf field parsing for these layouts.
-- Added extraction of nested GridData/... references.
-- When a selected path points to a DiffGrid/DefaultLayout:
-    1. Decode the container.
-    2. Extract its nested GridData reference.
-    3. Resolve that reference beneath the selected root.
-    4. Load the required GridData file lazily.
-    5. Decode it for the visual reference layer.
-- Preserved direct-root loading and memory-efficient behavior.
-- Adopted readable/non-minified source formatting as the project standard.
-
-Version 3.8
------------
-- Added a Google-Maps-style Grid Map viewport.
-- Added mouse-drag panning on empty map space.
-- Preserved item/block dragging for object movement.
-- Added mouse-wheel zooming toward the pointer.
-- Added Fit behavior for centering/scaling the entire grid.
-- Added dynamically sized map viewport behavior.
-- Removed map viewport scrollbars.
-- Added resize handling.
-- Added high-DPI canvas sizing support.
-
-Version 3.8.1
--------------
-- Fixed the reason the v3.8 Grid Map changes were not visible.
-- The readable grid-visual-source.html had been updated, but the Suite was still displaying an older embedded Grid Map payload.
-- Re-embedded the current Grid Map source into public/index.html.
-- Verified that the embedded Grid Map and readable grid-visual-source.html matched.
-- Improved Grid page/iframe sizing so the viewport fills the available page area.
-- Preserved:
-    - drag-to-pan
-    - wheel zoom
-    - item dragging
-    - Fit
-    - GridData/reference layers
-    - GridCollection editing
+- Began identifying the Dreamlight Save Suite with explicit version numbers.
+- Continued integration of the GridCollection map into the main Save Suite.
+- Worked on displaying GridCollection.grids[] objects correctly.
+- Improved support for encrypted profile.json input.
+- Integrated the previously working standalone GridCollection map into the Suite.
 
 Current Development Rules
 -------------------------
