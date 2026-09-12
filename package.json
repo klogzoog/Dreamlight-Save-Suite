@@ -1,0 +1,5 @@
+{
+  "name":"dreamlight-save-suite","version":"1.0.0","private":true,
+  "scripts":{"start":"node server.js"},
+  "dependencies":{"adm-zip":"^0.5.16","express":"^5.1.0"}
+}
