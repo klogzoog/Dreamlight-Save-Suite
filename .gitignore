@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# IDE/editor
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local save/game data
+profile.json
+profile.zip
+*.sav
+
+# Environment/local configuration
+.env
+.env.*
