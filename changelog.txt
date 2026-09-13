@@ -1,6 +1,18 @@
 Dreamlight Save Suite - CHANGELOG
 =================================
 
+Version 3.9.1
+-------------
+- Added fully browser-side encrypted profile.json loading for GitHub Pages.
+- Removed the browser dependency on the Node /api/decrypt endpoint.
+- Added client-side AES-256-ECB decryption using the existing Dreamlight Valley profile key.
+- Preserved NoPadding behavior and trailing-zero removal used by the local Node decoder.
+- Added client-side ZIP extraction and profile/profile.json lookup.
+- Added client-side JSON parsing and clearer decrypt/archive validation errors.
+- Encrypted save files are now decrypted locally in the user's browser and are not uploaded to a server.
+- Added CryptoJS and JSZip browser dependencies from jsDelivr.
+- GitHub Pages can now load encrypted Dreamlight Valley profile.json files directly.
+
 Version 3.9
 -----------
 - Refactored the Save Suite from one large HTML file into separate page files.

@@ -216,22 +216,149 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             document.querySelectorAll('nav button[data-page]').forEach(b => b.onclick = () => nav(b.dataset.page));
             nav(document.querySelector('.page.active')?.id || 'home');
-            $('loadEncrypted').onclick = () => $('encrypted').click();
-            $('encrypted').onchange = async e => {
+            const PROFILE_AES_KEY_HEX =
+                '62357168683873614a38556c444a557a545a5864325467366d626f3857386e35';
+
+            function uint8ArrayToCryptoJsWordArray(bytes) {
+                const words = [];
+
+                for (let i = 0; i < bytes.length; i++) {
+                    words[i >>> 2] =
+                        (words[i >>> 2] || 0) |
+                        (bytes[i] << (24 - (i % 4) * 8));
+                }
+
+                return CryptoJS.lib.WordArray.create(words, bytes.length);
+            }
+
+            function cryptoJsWordArrayToUint8Array(wordArray) {
+                const bytes = new Uint8Array(wordArray.sigBytes);
+                const words = wordArray.words;
+
+                for (let i = 0; i < wordArray.sigBytes; i++) {
+                    bytes[i] = (words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff;
+                }
+
+                return bytes;
+            }
+
+            function removeTrailingZeroBytes(bytes) {
+                let end = bytes.length;
+
+                while (end > 0 && bytes[end - 1] === 0) {
+                    end--;
+                }
+
+                return bytes.subarray(0, end);
+            }
+
+            function decryptProfileBytes(encryptedBytes) {
+                if (!window.CryptoJS) {
+                    throw new Error(
+                        'CryptoJS could not be loaded. Check your internet connection and reload the page.'
+                    );
+                }
+
+                if (encryptedBytes.length === 0) {
+                    throw new Error('The selected profile file is empty.');
+                }
+
+                if (encryptedBytes.length % 16 !== 0) {
+                    throw new Error(
+                        `Invalid encrypted profile length: ${encryptedBytes.length}. ` +
+                        'AES-256-ECB ciphertext must be a multiple of 16 bytes.'
+                    );
+                }
+
+                const ciphertext = uint8ArrayToCryptoJsWordArray(encryptedBytes);
+                const key = CryptoJS.enc.Hex.parse(PROFILE_AES_KEY_HEX);
+
+                const decrypted = CryptoJS.AES.decrypt(
+                    { ciphertext },
+                    key,
+                    {
+                        mode: CryptoJS.mode.ECB,
+                        padding: CryptoJS.pad.NoPadding
+                    }
+                );
+
+                return removeTrailingZeroBytes(
+                    cryptoJsWordArrayToUint8Array(decrypted)
+                );
+            }
+
+            async function extractProfileJsonFromZip(zipBytes) {
+                if (!window.JSZip) {
+                    throw new Error(
+                        'JSZip could not be loaded. Check your internet connection and reload the page.'
+                    );
+                }
+
+                const zip = await JSZip.loadAsync(zipBytes);
+                const entries = Object.values(zip.files).filter(entry => !entry.dir);
+
+                const profileEntry =
+                    entries.find(entry => entry.name === 'profile') ||
+                    entries.find(entry => entry.name === 'profile.json') ||
+                    entries.find(entry => entry.name.split('/').pop() === 'profile') ||
+                    entries.find(entry => entry.name.split('/').pop() === 'profile.json');
+
+                if (!profileEntry) {
+                    throw new Error(
+                        'The decrypted archive does not contain a profile or profile.json file.'
+                    );
+                }
+
+                const profileText = await profileEntry.async('string');
+
                 try {
-                    setStatus('Decrypting...');
-                    const r = await fetch('/api/decrypt', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/octet-stream'},
-                        body: await e.target.files[0].arrayBuffer()
-                    });
-                    const d = await r.json();
-                    if (!r.ok) throw Error(d.error);
-                    profile = d;
-                    loaded()
-                } catch (x) {
+                    return JSON.parse(profileText);
+                } catch (error) {
+                    throw new Error(
+                        `The decrypted profile is not valid JSON: ${error.message}`
+                    );
+                }
+            }
+
+            async function decryptProfileInBrowser(file) {
+                const encryptedBytes = new Uint8Array(await file.arrayBuffer());
+                const zipBytes = decryptProfileBytes(encryptedBytes);
+
+                if (
+                    zipBytes.length < 4 ||
+                    zipBytes[0] !== 0x50 ||
+                    zipBytes[1] !== 0x4b
+                ) {
+                    throw new Error(
+                        'Decryption completed, but the result is not a valid ZIP archive. ' +
+                        'Make sure you selected the encrypted Dreamlight Valley profile.json file.'
+                    );
+                }
+
+                return extractProfileJsonFromZip(zipBytes);
+            }
+
+            $('loadEncrypted').onclick = () => $('encrypted').click();
+
+            $('encrypted').onchange = async event => {
+                const file = event.target.files?.[0];
+
+                if (!file) {
+                    return;
+                }
+
+                try {
+                    setStatus('Decrypting locally in your browser...');
+
+                    profile = await decryptProfileInBrowser(file);
+
+                    await loaded();
+                } catch (error) {
+                    console.error(error);
                     setStatus('Decrypt failed', 'danger');
-                    alert(x.message)
+                    alert(error.message);
+                } finally {
+                    event.target.value = '';
                 }
             };
 

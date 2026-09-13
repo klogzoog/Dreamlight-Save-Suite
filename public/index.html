@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Dreamlight Save Suite v3.9</title>
+    <title>Dreamlight Save Suite v3.9.1</title>
     <style>
         * {
             box-sizing: border-box
@@ -451,7 +451,7 @@
 <body>
 <header>
     <button id="menuToggle" type="button" title="Hide navigation menu" aria-expanded="true">☰ Hide Menu</button>
-    <strong>Dreamlight Save Suite v3.9</strong>
+    <strong>Dreamlight Save Suite v3.9.1</strong>
     <button id="loadEncrypted">Load encrypted profile.json</button>
     <input id="encrypted" type="file" style="display:none">
     <button id="download" disabled>Download modified JSON</button>
@@ -509,6 +509,8 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="/js/app.js" defer></script>
 </body>
 </html>
