@@ -1,0 +1,106 @@
+name: Deploy Dreamlight Save Suite to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build GitHub Pages site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build static Pages artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf _site
+          mkdir -p _site
+
+          # GitHub Pages serves the browser application from public/.
+          cp -R public/. _site/
+
+          # Disable Jekyll processing so folders/files beginning with underscores
+          # or other static assets are served exactly as committed.
+          touch _site/.nojekyll
+
+          # Dreamlight Save Suite normally uses root-relative URLs while running
+          # from the local Node server. GitHub project Pages is commonly hosted at
+          # https://USERNAME.github.io/REPOSITORY/, so convert static asset/page
+          # references in the staged copy to repository-relative URLs.
+          python3 <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path("_site/index.html"): {
+                  'src="/js/app.js"': 'src="js/app.js"',
+              },
+              Path("_site/grid-visual-source.html"): {
+                  'src="/js/grid-map.js"': 'src="js/grid-map.js"',
+              },
+              Path("_site/pages/grid.html"): {
+                  'src="/grid-visual-source.html"': 'src="grid-visual-source.html"',
+              },
+              Path("_site/js/app.js"): {
+                  'fetch(`/pages/${page}.html`, { cache: "no-cache" })':
+                      'fetch(`pages/${page}.html`, { cache: "no-cache" })',
+                  "fetch('/known-ids.json', {cache: 'no-cache'})":
+                      "fetch('known-ids.json', {cache: 'no-cache'})",
+              },
+          }
+
+          for path, changes in replacements.items():
+              if not path.exists():
+                  raise SystemExit(f"Required file not found: {path}")
+
+              text = path.read_text(encoding="utf-8")
+
+              for old, new in changes.items():
+                  if old not in text:
+                      raise SystemExit(
+                          f"Expected text not found in {path}: {old}"
+                      )
+                  text = text.replace(old, new)
+
+              path.write_text(text, encoding="utf-8")
+          PY
+
+          echo "GitHub Pages artifact contents:"
+          find _site -maxdepth 3 -type f | sort
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
